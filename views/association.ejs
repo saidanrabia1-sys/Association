@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Associations</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    
+
+  <div class="container">
+    <h1>🤝 Associations</h1>
+
+    <form id="formAssociation">
+      <input type="text" id="nom" placeholder="Nom de l'association" required>
+      <input type="text" id="numero" placeholder="Numéro" required>
+      <input type="text" id="siret" placeholder="SIRET">
+      <input type="text" id="adresse" placeholder="Adresse">
+      <input type="date" id="date_creation" placeholder="Date de création">
+      <input type="text" id="telephone" placeholder="Téléphone">
+      <input type="text" id="president" placeholder="Président">
+      <button type="submit">➕ Ajouter une association</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Numéro</th>
+          <th>Téléphone</th>
+          <th>Président</th>
+          <th>Adresse</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tableAssociations"></tbody>
+    </table>
+  </div>
+
+  
+
+</body>
+</html>

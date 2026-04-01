@@ -1,0 +1,28 @@
+{
+  "name": "association",
+  "version": "1.0.0",
+  "main": "serveur.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saidanrabia1-sys/Association.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/saidanrabia1-sys/Association/issues"
+  },
+  "homepage": "https://github.com/saidanrabia1-sys/Association#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ejs": "^5.0.1",
+    "express": "^5.2.1",
+    "express-myconnection": "^1.0.4",
+    "mysql2": "^3.20.0"
+  }
+}

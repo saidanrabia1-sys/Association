@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Communes</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🏛️ Communes de Mayotte</h1>
+
+    <form id="formCommune">
+      <input type="text" id="nom" placeholder="Nom de la commune" required>
+      <input type="text" id="adresse" placeholder="Adresse">
+      <input type="text" id="telephone" placeholder="Téléphone">
+      <input type="text" id="president" placeholder="Maire / Président">
+      <button type="submit">➕ Ajouter une commune</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Adresse</th>
+          <th>Téléphone</th>
+          <th>Président</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tableCommunes"></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function charger() {
+      const res = await fetch('/communes');
+      const data = await res.json();
+      const tbody = document.getElementById('tableCommunes');
+      tbody.innerHTML = '';
+      data.forEach(c => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${c.nom}</td>
+            <td>${c.adresse}</td>
+            <td>${c.telephone}</td>
+            <td>${c.president}</td>
+            <td><button class="btn btn-red" onclick="supprimer(${c.id})">🗑 Supprimer</button></td>
+          </tr>`;
+      });
+    }
+
+    document.getElementById('formCommune').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/communes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: document.getElementById('nom').value,
+          adresse: document.getElementById('adresse').value,
+          telephone: document.getElementById('telephone').value,
+          president: document.getElementById('president').value
+        })
+      });
+      e.target.reset();
+      charger();
+    });
+
+    async function supprimer(id) {
+      if (confirm('Supprimer cette commune ?')) {
+        await fetch(`/communes/${id}`, { method: 'DELETE' });
+        charger();
+      }
+    }
+
+    charger();
+  </script>
+</body>
+</html>
