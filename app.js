@@ -1,418 +1,200 @@
-// J'importe le framework Express.js
+// ==============================
+// IMPORTS
+// ==============================
 const express = require('express');
-
-// J'importe le pilote Mysql2
-const mysql2 = require("mysql2");
-
-// J'importe express-myconnection pour la connexion à la BDD
+const mysql2 = require('mysql2');
 const myconnection = require('express-myconnection');
 
 const app = express();
 
+// ==============================
+// MIDDLEWARE
+// ==============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuration de la connexion à MySQL
-const optionsConnexionBaseDeDonnees = {
+// ==============================
+// CONFIG BASE DE DONNÉES
+// ==============================
+const dbConfig = {
     host: "localhost",
     user: "root",
-    password: "Alma12.2025", // ← ton mot de passe
-    database: "association",  // ← ta base de données
-    port: 3006
+    password: "Alma12.2025",
+    database: "association",
+    port: 3006 // ⚠️ vérifie ton port MySQL
 };
 
-// Middleware de connexion à la BDD (stratégie pool)
-app.use(myconnection(mysql2, optionsConnexionBaseDeDonnees, "pool"));
+// Connexion pool
+app.use(myconnection(mysql2, dbConfig, "pool"));
 
-// Dossier des vues EJS
-app.set('views', './views');
+// ==============================
+// VIEW ENGINE
+// ==============================
 app.set('view engine', 'ejs');
+app.set('views', './views');
 
-// Dossier des fichiers statiques
+// Fichiers statiques
 app.use(express.static('public'));
 
+// ==============================
+// ROUTES FRONT
+// ==============================
 
-// ===================================================
-// ROUTE RACINE
-// ===================================================
+// Accueil
 app.get('/', (req, res) => {
-    res.redirect('/');
-});
-
-
-// ===================================================
-// ACCUEIL
-// ===================================================
-app.get('/api/accueil', (req, res) => {
-    console.log("Je passe dans /api/accueil");
     res.render('accueil');
+                        });
+
+// ==============================
+// API ACCUEIL (optionnelle)
+// ==============================
+app.get('/api/accueil', (req, res) => {
+    res.json({ message: "Bienvenue sur l'API" });
 });
 
-// ===================================================
-// ASSOCIATIONS
-// ===================================================
+// ==============================
+// ASSOCIATIONS (CRUD)
+// ==============================
 
+// GET all
 app.get('/api/associations', (req, res) => {
     req.getConnection((err, connection) => {
-        if (err) return res.status(500).send("Erreur DB");
+        if (err) return res.status(500).send("Erreur connexion DB");
 
-        connection.query("SELECT * FROM associations", (err, results) => {
-            if (err) return res.status(500).send("Erreur SQL");
-
+        connection.query("SELECT * FROM association", (err, results) => {
+                if (err) return res.status(500).send("Erreur SQL");
             res.json(results);
         });
     });
 });
 
+// GET by ID
+app.get('/api/associations/:id', (req, res) => {
+    const { id } = req.params;
 
-// ===================================================
-// RÉSERVATIONS
-// ===================================================
-
-app.get('/api/reservations', (req, res) => {
     req.getConnection((err, connection) => {
-        connection.query("SELECT * FROM reservations", (err, results) => {
-            if (err) return res.send("Erreur");
+        if (err) return res.status(500).send("Erreur connexion DB");
 
-            res.json(results);
-        });
-    });
-});
+        connection.query(
+            "SELECT * FROM association WHERE id_association = ?",
+            [id],
+            (err, results) => {
+                if (err) return res.status(500).send("Erreur SQL");
 
-// GET MJC
-app.get('/api/mjc', (req, res) => {
-    req.getConnection((err, connection) => {
-        connection.query("SELECT * FROM mjc", (err, results) => {
-            if (err) return res.send("Erreur");
-            res.json(results);
-        });
-    });
-});
+                if (results.length === 0) {
+                    return res.status(404).send("Association introuvable");
+                }
 
-/*
-
-
-// Récupérer toutes les associations
-app.get('/api/associations', (req, res) => {
-    console.log("Je passe dans /api/associations");
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            console.log("Erreur de connexion :", erreur);
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query("SELECT * FROM association", [], (err, resultatsAssociations) => {
-            if (err) {
-                console.log("Erreur SQL :", err);
-                return res.status(500).send("Erreur SQL");
+                res.json(results[0]);
             }
-
-            console.log("Associations :", resultatsAssociations);
-            res.render('associations', { resultatsAssociations });
-        });
+        );
     });
 });
 
-// Ajouter une association
+// POST create
 app.post('/api/associations', (req, res) => {
-    console.log("Ajout d'une association :", req.body);
+    const { nom, adresse } = req.body;
 
-    const { nom, numero, siret, adresse, date_creation, telephone, president } = req.body;
+    if (!nom) {
+        return res.status(400).send("Le nom est obligatoire");
+    }
 
-    const requeteSql = "INSERT INTO association (nom, numero, siret, adresse, date_creation, telephone, president) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    const ordreChamps = [nom, numero, siret, adresse, date_creation, telephone, president];
+    req.getConnection((err, connection) => {
+        if (err) return res.status(500).send("Erreur connexion DB");
 
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            console.log("Erreur de connexion :", erreur);
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
+        connection.query(
+            "INSERT INTO association (nom, adresse) VALUES (?, ?)",
+            [nom, adresse],
+            (err, result) => {
+                if (err) return res.status(500).send("Erreur SQL");
 
-        connection.query(requeteSql, ordreChamps, (err, resultat) => {
-            if (err) {
-                console.log("Erreur ajout association :", err);
-                return res.status(500).send("Erreur SQL");
+                res.json({
+                    id_association: result.insertId,
+                    nom,
+                    adresse
+                });
             }
-
-            console.log("Association ajoutée !");
-            res.status(200).redirect('/api/associations');
-        });
+        );
     });
 });
 
-// Supprimer une association
-app.delete('/api/associations/:id', (req, res) => {
-    const idAssociation = req.params.id;
-    const queryDelete = "DELETE FROM association WHERE id = ?";
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            console.log("Erreur suppression association :", erreur);
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query(queryDelete, [idAssociation], (err, resultat) => {
-            if (err) {
-                console.log("Erreur requête suppression :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("Association supprimée !");
-            res.status(200).json({ routeAccueil: "/api/associations" });
-        });
-    });
-});
-
-// Modifier une association
+// PUT update
 app.put('/api/associations/:id', (req, res) => {
-    const idAssociation = req.params.id;
-    const { nom, numero, siret, adresse, date_creation, telephone, president } = req.body;
+    const { id } = req.params;
+    const { nom, adresse } = req.body;
 
-    const requeteSql = "UPDATE association SET nom=?, numero=?, siret=?, adresse=?, date_creation=?, telephone=?, president=? WHERE id=?";
-    const ordreChamps = [nom, numero, siret, adresse, date_creation, telephone, president, idAssociation];
+    req.getConnection((err, connection) => {
+        if (err) return res.status(500).send("Erreur connexion DB");
 
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            console.log("Erreur modification association :", erreur);
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
+        connection.query(
+            "UPDATE association SET nom = ?, adresse = ? WHERE id_association = ?",
+            [nom, adresse, id],
+            (err, result) => {
+                if (err) return res.status(500).send("Erreur SQL");
 
-        connection.query(requeteSql, ordreChamps, (err, resultat) => {
-            if (err) {
-                console.log("Erreur requête modification :", err);
-                return res.status(500).send("Erreur SQL");
+                if (result.affectedRows === 0) {
+                    return res.status(404).send("Association introuvable");
+                }
+
+                res.json({ message: "Association mise à jour" });
             }
-
-            console.log("Association modifiée !");
-            res.status(200).json({ message: "Association modifiée" });
-        });
+        );
     });
 });
 
+// DELETE
+app.delete('/api/associations/:id', (req, res) => {
+    const { id } = req.params;
 
-// ===================================================
-// MJC
-// ===================================================
+    req.getConnection((err, connection) => {
+        if (err) return res.status(500).send("Erreur connexion DB");
 
-// Récupérer toutes les MJC
-app.get('/api/mjc', (req, res) => {
-    console.log("Je passe dans /api/mjc");
+        connection.query(
+            "DELETE FROM association WHERE id_association = ?",
+            [id],
+            (err, result) => {
+                if (err) return res.status(500).send("Erreur SQL");
 
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            console.log("Erreur de connexion :", erreur);
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
+                if (result.affectedRows === 0) {
+                    return res.status(404).send("Association introuvable");
+                }
 
-        connection.query("SELECT * FROM mjc", [], (err, resultatsMjc) => {
-            if (err) {
-                console.log("Erreur SQL :", err);
-                return res.status(500).send("Erreur SQL");
+                res.json({ message: "Association supprimée" });
             }
-
-            console.log("MJC :", resultatsMjc);
-            res.render('mjc', { resultatsMjc });
-        });
+        );
     });
 });
 
-// Ajouter une MJC
-app.post('/api/mjc', (req, res) => {
-    const { nom, adresse, telephone } = req.body;
-
-    const requeteSql = "INSERT INTO mjc (nom, adresse, telephone) VALUES (?, ?, ?)";
-    const ordreChamps = [nom, adresse, telephone];
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query(requeteSql, ordreChamps, (err, resultat) => {
-            if (err) {
-                console.log("Erreur ajout MJC :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("MJC ajoutée !");
-            res.status(200).redirect('/api/mjc');
-        });
-    });
-});
-
-// Supprimer une MJC
-app.delete('/api/mjc/:id', (req, res) => {
-    const idMjc = req.params.id;
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query("DELETE FROM mjc WHERE id = ?", [idMjc], (err, resultat) => {
-            if (err) {
-                console.log("Erreur suppression MJC :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("MJC supprimée !");
-            res.status(200).json({ routeAccueil: "/api/mjc" });
-        });
-    });
-});
-
-
-// ===================================================
-// COMMUNES
-// ===================================================
-
-// Récupérer toutes les communes
-app.get('/api/communes', (req, res) => {
-    console.log("Je passe dans /api/communes");
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query("SELECT * FROM commune", [], (err, resultatsCommunes) => {
-            if (err) {
-                console.log("Erreur SQL :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("Communes :", resultatsCommunes);
-            res.render('communes', { resultatsCommunes });
-        });
-    });
-});
-
-// Ajouter une commune
-app.post('/api/communes', (req, res) => {
-    const { nom, adresse, telephone, president } = req.body;
-
-    const requeteSql = "INSERT INTO commune (nom, adresse, telephone, president) VALUES (?, ?, ?, ?)";
-    const ordreChamps = [nom, adresse, telephone, president];
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query(requeteSql, ordreChamps, (err, resultat) => {
-            if (err) {
-                console.log("Erreur ajout commune :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("Commune ajoutée !");
-            res.status(200).redirect('/api/communes');
-        });
-    });
-});
-
-// Supprimer une commune
-app.delete('/api/communes/:id', (req, res) => {
-    const idCommune = req.params.id;
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query("DELETE FROM commune WHERE id = ?", [idCommune], (err, resultat) => {
-            if (err) {
-                console.log("Erreur suppression commune :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("Commune supprimée !");
-            res.status(200).json({ routeAccueil: "/api/communes" });
-        });
-    });
-});
-
-
-
-// Récupérer toutes les réservations avec JOIN
+// ==============================
+// RESERVATIONS
+// ==============================
 app.get('/api/reservations', (req, res) => {
-    console.log("Je passe dans /api/reservations");
+    req.getConnection((err, connection) => {
+        if (err) return res.status(500).send("Erreur connexion DB");
 
-    const sql = `
-        SELECT 
-            r.id,
-            a.nom AS association,
-            m.nom AS mjc,
-            r.date_reservation
-        FROM reservations r
-        JOIN association a ON r.id_association = a.id
-        JOIN mjc m ON r.id_mjc = m.id
-    `;
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query(sql, [], (err, resultatsReservations) => {
-            if (err) {
-                console.log("Erreur SQL :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("Réservations :", resultatsReservations);
-            res.render('reservations', { resultatsReservations });
+        connection.query("SELECT * FROM reservations", (err, results) => {
+            if (err) return res.status(500).send("Erreur SQL");
+            res.json(results);
         });
     });
 });
 
-// Ajouter une réservation
-app.post('/api/reservations', (req, res) => {
-    const { id_association, id_mjc, date_reservation } = req.body;
+// ==============================
+// MJC
+// ==============================
+app.get('/api/mjc', (req, res) => {
+    req.getConnection((err, connection) => {
+        if (err) return res.status(500).send("Erreur connexion DB");
 
-    const requeteSql = "INSERT INTO reservations (id_association, id_mjc, date_reservation) VALUES (?, ?, ?)";
-    const ordreChamps = [id_association, id_mjc, date_reservation];
-
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query(requeteSql, ordreChamps, (err, resultat) => {
-            if (err) {
-                console.log("Erreur ajout réservation :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("Réservation ajoutée !");
-            res.status(200).redirect('/api/reservations');
+        connection.query("SELECT * FROM mjc", (err, results) => {
+            if (err) return res.status(500).send("Erreur SQL");
+            res.json(results);
         });
     });
 });
 
-// Supprimer une réservation
-app.delete('/api/reservations/:id', (req, res) => {
-    const idReservation = req.params.id;
 
-    req.getConnection((erreur, connection) => {
-        if (erreur) {
-            return res.status(500).send("Erreur de connexion à la BDD");
-        }
-
-        connection.query("DELETE FROM reservations WHERE id = ?", [idReservation], (err, resultat) => {
-            if (err) {
-                console.log("Erreur suppression réservation :", err);
-                return res.status(500).send("Erreur SQL");
-            }
-
-            console.log("Réservation supprimée !");
-            res.status(200).json({ routeAccueil: "/api/reservations" });
-        });
-    });
-});
-*/
-
-
-// Fin du fichier — ne pas coder en dessous
+// ==============================
+// EXPORT
+// ==============================
 module.exports = app;

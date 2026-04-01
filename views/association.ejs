@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Associations</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-    
+  <%- include('navbar') %>
 
   <div class="container">
     <h1>🤝 Associations</h1>
 
     <form id="formAssociation">
       <input type="text" id="nom" placeholder="Nom de l'association" required>
-      <input type="text" id="numero" placeholder="Numéro" required>
+      <input type="text" id="numero" placeholder="Numéro (ex: M001)" required>
       <input type="text" id="siret" placeholder="SIRET">
       <input type="text" id="adresse" placeholder="Adresse">
-      <input type="date" id="date_creation" placeholder="Date de création">
+      <input type="date" id="date_creation">
       <input type="text" id="telephone" placeholder="Téléphone">
       <input type="text" id="president" placeholder="Président">
       <button type="submit">➕ Ajouter une association</button>
@@ -26,11 +26,14 @@
     <table>
       <thead>
         <tr>
+          <th>ID</th>
           <th>Nom</th>
           <th>Numéro</th>
+          <th>SIRET</th>
           <th>Téléphone</th>
           <th>Président</th>
           <th>Adresse</th>
+          <th>Date création</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -38,7 +41,82 @@
     </table>
   </div>
 
-  
+  <script>
+    // ===================================================
+    // CHARGER LES ASSOCIATIONS
+    // ===================================================
+    async function chargerAssociations() {
+      const response = await fetch('/api/associations');
+      const associations = await response.json();
+
+      const tbody = document.getElementById('tableAssociations');
+      tbody.innerHTML = '';
+
+      associations.forEach(asso => {
+        const date = asso.date_creation
+          ? new Date(asso.date_creation).toLocaleDateString('fr-FR')
+          : '-';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${asso.id_association}</td>
+          <td>${asso.nom}</td>
+          <td>${asso.numero || '-'}</td>
+          <td>${asso.siret || '-'}</td>
+          <td>${asso.telephone || '-'}</td>
+          <td>${asso.president || '-'}</td>
+          <td>${asso.adresse || '-'}</td>
+          <td>${date}</td>
+          <td>
+            <button onclick="supprimerAssociation(${asso.id_association})">🗑️ Supprimer</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    
+    // ===================================================
+    // AJOUTER UNE ASSOCIATION
+    // ===================================================
+    document.getElementById('formAssociation').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nouvelleAssociation = {
+        nom:           document.getElementById('nom').value,
+        numero:        document.getElementById('numero').value,
+        siret:         document.getElementById('siret').value,
+        adresse:       document.getElementById('adresse').value,
+        date_creation: document.getElementById('date_creation').value,
+        telephone:     document.getElementById('telephone').value,
+        president:     document.getElementById('president').value
+      };
+
+      await fetch('/api/associations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nouvelleAssociation)
+      });
+
+      e.target.reset();
+      chargerAssociations();
+    });
+
+    // ===================================================
+    // SUPPRIMER UNE ASSOCIATION
+    // ===================================================
+    async function supprimerAssociation(id) {
+      if (!confirm('Supprimer cette association ?')) return;
+
+      await fetch(`/api/associations/${id}`, { method: 'DELETE' });
+      chargerAssociations();
+    }
+
+    // Chargement initial
+    chargerAssociations();
+    
+  </script>
+
+  <script src="/js/script.js"></script>
 
 </body>
 </html>

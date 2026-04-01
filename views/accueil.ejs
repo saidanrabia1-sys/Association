@@ -10,17 +10,98 @@
 <div class="container">
   <h1>Bienvenue sur la plateforme</h1>
   <p>Gestion des associations de Mayotte</p>
-</div>  
+  <br>
 
-<nav class="navbar">
+  <nav class="navbar">
   <div class="logo">Mon Association</div>
   <br>
-    <a href="/">🏠 Accueil</a>
-    <a href="/association">Associations</a>
-    <a href="/reservation">Réservations</a>
-    <a href="/commune">Communes</a>
+
+    <a href="/accueil">🏠 Accueil</a>
+    <a href="/association">🤝Associations</a>
+    <a href="/reservation">📅 Réservations</a>
+    <a href="/commune">🏛️ Communes</a>
     <a href="/Mjc">🏢 MJC</a>
   </nav>
+  </div>  
+
+
+  <!-- Bouton pour ouvrir le modal -->
+<button id="openModalBtn">Ajouter une association</button>
+
+<!-- MODAL -->
+<div id="myModal" class="modal">
+    <div class="modal-content">
+        <span id="closeModal" class="close">&times;</span>
+
+                  <input id="nom">
+                  <input id="adresse">
+                  <input id="telephone">
+                  <input id="email">
+                  <textarea id="description"></textarea>
+
+        <h2>Ajouter une association</h2>
+
+        <form id="formAssociation">
+
+ 
+
+            <label>Nom :</label>
+            <input type="text" name="nom" required />
+
+            <label>Adresse :</label>
+            <input type="text" name="adresse" />
+
+            <button type="submit">Enregistrer</button>
+        </form>
+
+        
+<form id="formAssociation">
+    
+    <div>
+        <label for="nom">Nom de l'association :</label>
+        <input type="text" id="nom" name="nom" required />
+    </div>
+
+    <div>
+        <label for="adresse">Adresse :</label>
+        <input type="text" id="adresse" name="adresse" />
+    </div>
+
+    <div>
+        <label for="telephone">Téléphone :</label>
+        <input type="text" id="telephone" name="telephone" />
+    </div>
+
+    <div>
+        <label for="email">Email :</label>
+        <input type="email" id="email" name="email" />
+    </div>
+
+    <div>
+        <label for="description">Description :</label>
+        <textarea id="description" name="description"></textarea>
+    </div>
+
+    <button type="submit">Enregistrer</button>
+
+    <button onclick="modifier(
+  1,
+  'Association A',
+  'Paris',
+  '0600000000',
+  'test@mail.com',
+  'Description ici'
+)">
+  Modifier
+</button>
+
+</form>
+
+    </div>
+
+</div>
+
+<script src="/script.js"></script>
 
 </body>
-</html>
+</html> 
