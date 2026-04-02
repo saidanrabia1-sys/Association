@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Associations par Commune</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('navbar') %>
+  <div class="container">
+    <h1>🗺️ Associations par Commune</h1>
+
+    <div>
+      <label>Filtrer par commune :</label>
+      <select id="filtreCommune">
+        <option value="">-- Toutes les communes --</option>
+      </select>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Commune</th><th>Association</th><th>Numéro</th>
+          <th>Téléphone</th><th>Président</th><th>Adresse</th><th>Date création</th>
+        </tr>
+      </thead>
+      <tbody id="tableAssociations"></tbody>
+    </table>
+  </div>
+
+  <script>
+    let toutesLesAssociations = [];
+
+    async function chargerCommunes() {
+      const communes = await fetch('/api/communes').then(r => r.json());
+      const select   = document.getElementById('filtreCommune');
+      communes.forEach(c => {
+        select.innerHTML += `<option value="${c.id}">${c.nom}</option>`;
+      });
+    }
+
+    async function chargerTout() {
+      toutesLesAssociations = await fetch('/api/associations-par-commune').then(r => r.json());
+      afficher(toutesLesAssociations);
+    }
+
+    function afficher(data) {
+      const tbody = document.getElementById('tableAssociations');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7">Aucune association trouvée</td></tr>';
+        return;
+      }
+
+      data.forEach(a => {
+        const date = a.date_creation
+          ? new Date(a.date_creation).toLocaleDateString('fr-FR') : '-';
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${a.nom_commune}</strong></td>
+            <td>${a.nom_association}</td>
+            <td>${a.numero    || '-'}</td>
+            <td>${a.telephone || '-'}</td>
+            <td>${a.president || '-'}</td>
+            <td>${a.adresse   || '-'}</td>
+            <td>${date}</td>
+          </tr>`;
+      });
+    }
+
+    document.getElementById('filtreCommune').addEventListener('change', (e) => {
+      const id = e.target.value;
+      if (id === '') {
+        afficher(toutesLesAssociations);
+      } else {
+        afficher(toutesLesAssociations.filter(a => String(a.id_commune) === id));
+      }
+    });
+
+    chargerCommunes();
+    chargerTout();
+
+    async function chargerTout() {
+    const response = await fetch('/api/associations-par-commune');
+    const data     = await response.json();
+
+    // ✅ Vérifier que c'est bien un tableau
+    if (!Array.isArray(data)) {
+        console.error("Erreur API :", data);
+        return;
+    }
+
+    toutesLesAssociations = data;
+    afficher(toutesLesAssociations);
+}
+
+  </script>
+</body>
+</html>

@@ -3,64 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <title>MJC</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-
-    <%- include('navbar') %>
-
-  <nav>
-    <a href="index.html">🏠 Accueil</a>
-    <a href="association.ejs">🤝 Associations</a>
-    <a href="mjc.ejs">🏢 MJC</a>
-    <a href="reservation.ejs">📅 Réservations</a>
-    <a href="commune.ejs">🏛️ Communes</a>
-  </nav>
-
+  <%- include('navbar') %>
   <div class="container">
-    <h1>🏢 MJC de Mayotte</h1>
+    <h1>🏢 MJC</h1>
 
-    <form id="formMJC">
-      <input type="text" id="nom" placeholder="Nom de la MJC" required>
-      <input type="text" id="adresse" placeholder="Adresse">
+    <form id="formMjc">
+      <input type="text" id="nom"       placeholder="Nom de la MJC" required>
+      <input type="text" id="adresse"   placeholder="Adresse">
       <input type="text" id="telephone" placeholder="Téléphone">
-      <button type="submit">➕ Ajouter une MJC</button>
+      <button type="submit">➕ Ajouter</button>
     </form>
 
     <table>
       <thead>
         <tr>
-          <th>Nom</th>
-          <th>Adresse</th>
-          <th>Téléphone</th>
-          <th>Action</th>
+          <th>ID</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Action</th>
         </tr>
+      </thead>
+      <tbody id="tableMjc"></tbody>
     </table>
-
-    <div class="container">
-  <h2>Ajouter une MJC</h2>
-
-  <form id="formMJC">
-    <input type="text" id="nom" placeholder="Nom" required>
-    <input type="text" id="adresse" placeholder="Adresse">
-    <input type="text" id="telephone" placeholder="Téléphone">
-    <button type="submit">Ajouter</button>
-  </form>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Nom</th>
-        <th>Adresse</th>
-        <th>Téléphone</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="tableMJC"></tbody>
-  </table>
-</div>
-
   </div>
 
+  <script>
+    async function chargerMjc() {
+      const response = await fetch('/api/mjc');
+      const data     = await response.json();
+      const tbody    = document.getElementById('tableMjc');
+      tbody.innerHTML = '';
+
+      data.forEach(m => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${m.id_mjc}</td>
+            <td>${m.nom}</td>
+            <td>${m.adresse   || '-'}</td>
+            <td>${m.telephone || '-'}</td>
+            <td><button onclick="supprimer(${m.id_mjc})">🗑️</button></td>
+          </tr>`;
+      });
+    }
+
+    document.getElementById('formMjc').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/api/mjc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom:       document.getElementById('nom').value,
+          adresse:   document.getElementById('adresse').value,
+          telephone: document.getElementById('telephone').value
+        })
+      });
+      e.target.reset();
+      chargerMjc();
+    });
+
+    async function supprimer(id) {
+      if (!confirm('Supprimer ?')) return;
+      await fetch(`/api/mjc/${id}`, { method: 'DELETE' });
+      chargerMjc();
+    }
+
+    chargerMjc();
+  </script>
 </body>
 </html>
