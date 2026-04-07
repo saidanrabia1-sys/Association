@@ -1,35 +1,25 @@
- // Toast
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.className = "toast show";
+// ===================
+// MODAL
+// ===================
+const modal = document.getElementById("myModal");
 
-  setTimeout(() => {
-    toast.className = toast.className.replace("show", "");
-  }, 3006);
+if (modal) {
+  document.getElementById("openModalBtn").onclick = () => {
+    modal.style.display = "block";
+  };
+
+  document.getElementById("closeModal").onclick = () => {
+    modal.style.display = "none";
+  };
 }
 
+// ===================
+// AJOUT ASSOCIATION
+// ===================
+const form = document.getElementById("formAssociation");
 
-// Fonction modifier une association
-function modifier(id, nom, adresse, telephone, email, description) {
-
-  // Changer le titre du modal
-  document.querySelector(".modal-header h2").textContent = "Modifier une association";
-
-  // Pré-remplir le formulaire
-  document.getElementById("nom").value = nom || "";
-  document.getElementById("adresse").value = adresse || "";
-  document.getElementById("telephone").value = telephone || "";
-  document.getElementById("email").value = email || "";
-  document.getElementById("description").value = description || "";
-
-  // Ouvrir le modal
-  modal.style.display = "block";
-
-  // Gérer le submit
-  const form = document.querySelector("form");
-
-  form.onsubmit = (e) => {
+if (form) {
+  form.onsubmit = async (e) => {
     e.preventDefault();
 
     const data = {
@@ -40,19 +30,71 @@ function modifier(id, nom, adresse, telephone, email, description) {
       description: document.getElementById("description").value
     };
 
-    fetch(`/api/associations/${id}`, {
-      method: "PUT",
+    await fetch('/api/associations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    alert("Ajout réussi !");
+    location.reload();
+  };
+}
+
+// ===================
+// AFFICHER ASSOCIATIONS
+// ===================
+async function chargerAssociations() {
+  const res = await fetch('/api/associations');
+  const data = await res.json();
+
+  const table = document.getElementById("tableAssociations");
+  if (!table) return;
+
+  table.innerHTML = "";
+
+  data.forEach(a => {
+    table.innerHTML += `
+      <tr>
+        <td>${a.id_association}</td>
+        <td>${a.nom}</td>
+        <td>${a.adresse || ''}</td>
+        <td>${a.telephone || ''}</td>
+        <td>${a.email || ''}</td>
+        <td>
+          <button onclick="supprimer(${a.id_association})">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function supprimer(id) {
+  await fetch('/api/associations/' + id, { method: 'DELETE' });
+  chargerAssociations();
+}
+
+chargerAssociations();
+
+
+// ===================
+// CONTACT
+// ===================
+const contactForm = document.getElementById("contactForm");
+
+if (contactForm) {
+  contactForm.onsubmit = async (e) => {
+    e.preventDefault();
+
+    const data = Object.fromEntries(new FormData(contactForm));
+
+    await fetch('/api/contact', {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
-    })
-    .then(res => {
-      if (res.ok) {
-        showToast("Modification réussie !");
-        setTimeout(() => location.reload(), 1200);
-      } else {
-        showToast("Erreur lors de la modification");
-      }
-    })
-    .catch(() => showToast("Erreur lors de la modification"));
+    });
+
+    alert("Message envoyé !");
+    contactForm.reset();
   };
 }

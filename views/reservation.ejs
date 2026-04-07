@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Réservations</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css"> <!-- ✅ ajout du / -->
 </head>
 <body>
+
   <%- include('navbar') %>
+
   <div class="container">
     <h1>📅 Réservations</h1>
 
@@ -18,13 +20,16 @@
         <option value="">-- Choisir une MJC --</option>
       </select>
       <input type="date" id="date_reservation" required>
-      <button type="submit">➕ Ajouter</button>
+      <button type="submit">➕ Ajouter une réservation</button>
     </form>
 
     <table>
       <thead>
         <tr>
-          <th>Association</th><th>MJC</th><th>Date</th><th>Action</th>
+          <th>Association</th>
+          <th>MJC</th>
+          <th>Date</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="tableReservations"></tbody>
@@ -32,43 +37,57 @@
   </div>
 
   <script>
+    // ===================================================
+    // CHARGER LES SELECTS (associations + mjc)
+    // ===================================================
     async function chargerSelects() {
-      const associations = await fetch('/api/associations').then(r => r.json());
-      const mjcs         = await fetch('/api/mjc').then(r => r.json());
+      const associations = await fetch('/api/associations').then(r => r.json()); // ✅ /api/
+      const mjcs         = await fetch('/api/mjc').then(r => r.json());          // ✅ /api/
 
       const selA = document.getElementById('id_association');
       associations.forEach(a => {
-        selA.innerHTML += `<option value="${a.id_association}">${a.nom}</option>`;
+        selA.innerHTML += `<option value="${a.id_association}">${a.nom}</option>`; // ✅ id_association
       });
 
       const selM = document.getElementById('id_mjc');
       mjcs.forEach(m => {
-        selM.innerHTML += `<option value="${m.id_mjc}">${m.nom}</option>`;
+        selM.innerHTML += `<option value="${m.id}">${m.nom}</option>`;
       });
     }
 
-    async function chargerReservations() {
-      const response = await fetch('/api/reservations');
-      const data     = await response.json();
-      const tbody    = document.getElementById('tableReservations');
+    // ===================================================
+    // CHARGER LES RÉSERVATIONS
+    // ===================================================
+    async function charger() {
+      const res  = await fetch('/api/reservations'); // ✅ /api/
+      const data = await res.json();
+      const tbody = document.getElementById('tableReservations');
       tbody.innerHTML = '';
 
       data.forEach(r => {
         const date = r.date_reservation
-          ? new Date(r.date_reservation).toLocaleDateString('fr-FR') : '-';
+          ? new Date(r.date_reservation).toLocaleDateString('fr-FR')
+          : '-';
+
         tbody.innerHTML += `
           <tr>
-            <td>${r.association}</td>
-            <td>${r.mjc}</td>
+            <td>${r.association || r.id_association}</td>
+            <td>${r.mjc || r.id_mjc}</td>
             <td>${date}</td>
-            <td><button onclick="supprimer(${r.id})">🗑️</button></td>
+            <td>
+              <button onclick="supprimer(${r.id})">🗑️ Supprimer</button>
+            </td>
           </tr>`;
       });
     }
 
+    // ===================================================
+    // AJOUTER UNE RÉSERVATION
+    // ===================================================
     document.getElementById('formReservation').addEventListener('submit', async (e) => {
       e.preventDefault();
-      await fetch('/api/reservations', {
+
+      await fetch('/api/reservations', { // ✅ /api/
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,18 +96,22 @@
           date_reservation: document.getElementById('date_reservation').value
         })
       });
+
       e.target.reset();
-      chargerReservations();
+      charger();
     });
 
+    // ===================================================
+    // SUPPRIMER UNE RÉSERVATION
+    // ===================================================
     async function supprimer(id) {
-      if (!confirm('Supprimer ?')) return;
-      await fetch(`/api/reservations/${id}`, { method: 'DELETE' });
-      chargerReservations();
+      if (!confirm('Supprimer cette réservation ?')) return;
+      await fetch(`/api/reservations/${id}`, { method: 'DELETE' }); // ✅ /api/
+      charger();
     }
 
     chargerSelects();
-    chargerReservations();
+    charger();
   </script>
 </body>
 </html>

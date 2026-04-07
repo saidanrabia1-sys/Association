@@ -11,18 +11,22 @@
     <h1>🏛️ Communes de Mayotte</h1>
 
     <form id="formCommune">
-      <input type="text" id="nom"       placeholder="Nom de la commune" required>
-      <input type="text" id="adresse"   placeholder="Adresse">
+      <input type="text" id="nom" placeholder="Nom de la commune" required>
+      <input type="text" id="adresse" placeholder="Adresse">
       <input type="text" id="telephone" placeholder="Téléphone">
       <input type="text" id="president" placeholder="Maire / Président">
-      <button type="submit">➕ Ajouter</button>
+      <button type="submit">➕ Ajouter une commune</button>
     </form>
 
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>Nom</th><th>Adresse</th>
-          <th>Téléphone</th><th>Président</th><th>Action</th>
+          <th>ID</th>
+          <th>Nom</th>
+          <th>Adresse</th>
+          <th>Téléphone</th>
+          <th>Président</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="tableCommunes"></tbody>
@@ -36,15 +40,15 @@
       const tbody    = document.getElementById('tableCommunes');
       tbody.innerHTML = '';
 
-      data.forEach(c => {
+      data.forEach(commune => {
         tbody.innerHTML += `
           <tr>
-            <td>${c.id}</td>
-            <td>${c.nom}</td>
-            <td>${c.adresse   || '-'}</td>
-            <td>${c.telephone || '-'}</td>
-            <td>${c.president || '-'}</td>
-            <td><button onclick="supprimer(${c.id})">🗑️</button></td>
+            <td>${commune.id}</td>
+            <td>${commune.nom}</td>
+            <td>${commune.adresse || '-'}</td>
+            <td>${commune.telephone || '-'}</td>
+            <td>${commune.president || '-'}</td>
+            <td><button onclick="supprimer(${commune.id})">🗑️ Supprimer</button></td>
           </tr>`;
       });
     }
@@ -66,7 +70,7 @@
     });
 
     async function supprimer(id) {
-      if (!confirm('Supprimer ?')) return;
+      if (!confirm('Supprimer cette commune ?')) return;
       await fetch(`/api/communes/${id}`, { method: 'DELETE' });
       chargerCommunes();
     }

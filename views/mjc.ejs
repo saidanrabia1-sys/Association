@@ -20,7 +20,7 @@
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Action</th>
+          <th>Numéro</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Action</th>
         </tr>
       </thead>
       <tbody id="tableMjc"></tbody>
@@ -35,13 +35,15 @@
       tbody.innerHTML = '';
 
       data.forEach(m => {
+        console.log(m)
+        console.log(m.NOM)
         tbody.innerHTML += `
           <tr>
-            <td>${m.id_mjc}</td>
-            <td>${m.nom}</td>
-            <td>${m.adresse   || '-'}</td>
-            <td>${m.telephone || '-'}</td>
-            <td><button onclick="supprimer(${m.id_mjc})">🗑️</button></td>
+            <td>${m.ID}</td>
+            <td>${m.NOM}</td>
+            <td>${m.ADRESSE  || '-'}</td>
+            <td>${m.TELEPHONE|| '-'}</td>
+            <td><button onclick="supprimer(${m.ID})">🗑️</button></td>
           </tr>`;
       });
     }

@@ -20,11 +20,29 @@ app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.static('public'));
 
-// ===================================================
-// PAGES
-// ===================================================
-app.get('/',                      (req, res) => res.render('accueil'));
-app.get('/accueil',               (req, res) => res.render('accueil'));
+//  API Route pour la racine de la page : localhost:3004/
+app.get('/', (req, res) => {
+    // Message à afficher : Bienvenue chez May Gourmet
+    res.write("<h1> Bienvenue sur mon Plateforme association </h1>");
+    res.end();
+});
+
+// API route pour la page d'accueil
+app.get("/accueil", (req, res) => {
+    console.log(" Je passe dans /api/accueil");
+
+    res.render('accueil');
+
+    // Le type d'encodage du tex
+    //res.writeHead(200,{ "content-type": "text/html;charset=utf-8"})
+
+    // Le conten qui seraa affiché côté navigateur 
+    //res.write("<p> Je suis à l'accueil </p>");
+
+    // Fin de la réponse
+    //res.end();
+});
+
 app.get('/association',           (req, res) => res.render('association'));
 app.get('/commune',               (req, res) => res.render('commune'));
 app.get('/mjc',                   (req, res) => res.render('mjc'));
@@ -34,7 +52,7 @@ app.get('/associations-commune',  (req, res) => res.render('associations-commune
 // ===================================================
 // API ASSOCIATIONS
 // ===================================================
-app.get('/api/associations', (req, res) => {
+app.get('/api/association', (req, res) => {
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
         connection.query("SELECT * FROM association", (err, results) => {
@@ -44,7 +62,7 @@ app.get('/api/associations', (req, res) => {
     });
 });
 
-app.post('/api/associations', (req, res) => {
+app.post('/api/association', (req, res) => {
     const data = req.body;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
@@ -55,7 +73,7 @@ app.post('/api/associations', (req, res) => {
     });
 });
 
-app.put('/api/associations/:id', (req, res) => {
+app.put('/api/association/:id', (req, res) => {
     const { id } = req.params;
     const data   = req.body;
     req.getConnection((err, connection) => {
@@ -70,7 +88,7 @@ app.put('/api/associations/:id', (req, res) => {
     });
 });
 
-app.delete('/api/associations/:id', (req, res) => {
+app.delete('/api/association/:id', (req, res) => {
     const { id } = req.params;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
@@ -87,7 +105,7 @@ app.delete('/api/associations/:id', (req, res) => {
 // ===================================================
 // API COMMUNES
 // ===================================================
-app.get('/api/communes', (req, res) => {
+app.get('/api/commune', (req, res) => {
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
         connection.query("SELECT * FROM commune", (err, results) => {
@@ -97,7 +115,7 @@ app.get('/api/communes', (req, res) => {
     });
 });
 
-app.post('/api/communes', (req, res) => {
+app.post('/api/commune', (req, res) => {
     const data = req.body;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
@@ -108,7 +126,7 @@ app.post('/api/communes', (req, res) => {
     });
 });
 
-app.put('/api/communes/:id', (req, res) => {
+app.put('/api/commune/:id', (req, res) => {
     const { id } = req.params;
     const data   = req.body;
     req.getConnection((err, connection) => {
@@ -123,7 +141,7 @@ app.put('/api/communes/:id', (req, res) => {
     });
 });
 
-app.delete('/api/communes/:id', (req, res) => {
+app.delete('/api/commune/:id', (req, res) => {
     const { id } = req.params;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
@@ -147,13 +165,14 @@ app.get('/api/mjc', (req, res) => {
     });
 });
 
-app.post('/api/mjc', (req, res) => {
-    const data = req.body;
+$=app.get('/api/mjc', (req, res) => {
     req.getConnection((err, connection) => {
-        if (err) return res.status(500).json({ error: "Erreur connexion DB" });
-        connection.query("INSERT INTO mjc SET ?", data, (err, results) => {
+        if (err) return res.status(500).json({ error: "Erreur DB" });
+
+        connection.query("SELECT * FROM mjc", (err, results) => {
             if (err) return res.status(500).json({ error: "Erreur SQL" });
-            res.json({ id_mjc: results.insertId, ...data });
+
+            res.json(results); // ✅ IMPORTANT
         });
     });
 });
@@ -174,6 +193,7 @@ app.put('/api/mjc/:id', (req, res) => {
 });
 
 app.delete('/api/mjc/:id', (req, res) => {
+    console.log
     const { id } = req.params;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
@@ -187,7 +207,7 @@ app.delete('/api/mjc/:id', (req, res) => {
 // ===================================================
 // API RESERVATIONS
 // ===================================================
-app.get('/api/reservations', (req, res) => {
+app.get('/api/reservation', (req, res) => {
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
         connection.query(`
@@ -202,7 +222,7 @@ app.get('/api/reservations', (req, res) => {
     });
 });
 
-app.post('/api/reservations', (req, res) => {
+app.post('/api/reservation', (req, res) => {
     const data = req.body;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
@@ -213,7 +233,7 @@ app.post('/api/reservations', (req, res) => {
     });
 });
 
-app.delete('/api/reservations/:id', (req, res) => {
+app.delete('/api/reservation/:id', (req, res) => {
     const { id } = req.params;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
@@ -227,7 +247,7 @@ app.delete('/api/reservations/:id', (req, res) => {
 // ===================================================
 // API ASSOCIATIONS PAR COMMUNE
 // ===================================================
-app.get('/api/associations-par-commune', (req, res) => {
+app.get('/api/association-par-commune', (req, res) => {
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
         connection.query(`
@@ -279,7 +299,7 @@ app.get('/test-db', (req, res) => {
     });
 });
 
-app.get('/api/associations', (req, res) => {
+app.get('/api/association', (req, res) => {
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });
         connection.query(`

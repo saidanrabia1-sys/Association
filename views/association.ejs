@@ -1,292 +1,67 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Associations</title>
-    <link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8">
+  <title>Associations</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <%- include('navbar') %>
+  <div class="container">
+    <h1>🤝 Associations</h1>
 
-    <%- include('navbar') %>
+    <form id="formAssociation">
+      <input type="text"  id="nom"           placeholder="Nom de l'association" required>
+      <input type="text"  id="numero"        placeholder="Numéro (ex: M001)">
+      <input type="text"  id="siret"         placeholder="SIRET">
+      <input type="text"  id="adresse"       placeholder="Adresse">
+      <input type="date"  id="date_creation">
+      <input type="text"  id="telephone"     placeholder="Téléphone">
+      <input type="text"  id="president"     placeholder="Président">
+      <button type="submit">➕ Ajouter</button>
+    </form>
 
-    <div class="container">
-        <h1>🤝 Associations</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>Nom</th><th>Numéro</th><th>SIRET</th>
+          <th>Adresse</th><th>Date création</th><th>Téléphone</th>
+          <th>Président</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tableAssociations"></tbody>
+    </table>
+  </div>
 
-        <!-- Bouton ouvrir modal -->
-        <button id="myBtn">➕ Ajouter une association</button>
+  <script>
+    async function chargerAssociations() {
+    const response = await fetch('/api/associations');
+    const data     = await response.json();
 
-        <!-- ============================= -->
-        <!-- MODAL -->
-        <!-- ============================= -->
-        <div id="myModal" class="modal">
-            <div class="modal-content">
+    // Debug : voir ce que retourne l'API
+    console.log("Données reçues :", data[0]);
 
-                <div class="modal-header">
-                    <span class="close">&times;</span>
-                    <h2 id="modalTitre">Créer une association</h2>
-                </div>
+    const tbody = document.getElementById('tableAssociations');
+    tbody.innerHTML = '';
 
-                <div class="modal-body">
-                    <div class="container">
-                        <form id="associationForm">
+    data.forEach(a => {
+        const date = a.date_creation
+            ? new Date(a.date_creation).toLocaleDateString('fr-FR') : '-';
 
-                            <input type="hidden" id="associationId" value="">
-
-                            <label>Nom</label>
-                            <input type="text" id="nom" placeholder="Nom de l'association..." required>
-                            <br><br>
-
-                            <label>Numéro</label>
-                            <input type="text" id="numero" placeholder="Ex: M001...">
-                            <br><br>
-
-                            <label>SIRET</label>
-                            <input type="text" id="siret" placeholder="Numéro SIRET...">
-                            <br><br>
-
-                            <label>Adresse</label>
-                            <input type="text" id="adresse" placeholder="Adresse...">
-                            <br><br>
-
-                            <label>Date de création</label>
-                            <input type="date" id="date_creation">
-                            <br><br>
-
-                            <label>Téléphone</label>
-                            <input type="text" id="telephone" placeholder="Téléphone...">
-                            <br><br>
-
-                            <label>Président</label>
-                            <input type="text" id="president" placeholder="Nom du président...">
-                            <br><br>
-
-                            <label>Commune</label>
-                            <select id="id_commune">
-                                <option value="">-- Choisir une commune --</option>
-                            </select>
-                            <br><br>
-
-                            <button type="submit">Envoyer</button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <h3>Footer</h3>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ============================= -->
-        <!-- TABLEAU -->
-        <!-- ============================= -->
-        <h2 style="margin-top:30px;">Liste des associations</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nom</th>
-                    <th>Numéro</th>
-                    <th>SIRET</th>
-                    <th>Adresse</th>
-                    <th>Date création</th>
-                    <th>Téléphone</th>
-                    <th>Président</th>
-                    <th>Commune</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="tableAssociations"></tbody>
-        </table>
-
-        <!-- ============================= -->
-        <!-- CARTES -->
-        <!-- ============================= -->
-        <h2 style="margin-top:40px;">Associations</h2>
-        <div id="cartesAssociations" style="display:flex; flex-wrap:wrap; gap:20px; margin-top:20px;"></div>
-
-    </div>
-
-    <script>
-        const modal          = document.getElementById("myModal");
-        const btn            = document.getElementById("myBtn");
-        const span           = document.querySelector(".close");
-        const form           = document.getElementById("associationForm");
-        const modalTitre     = document.getElementById("modalTitre");
-        let   modeEdition    = false;
-
-        // ===========================
-        // MODAL OUVERTURE/FERMETURE
-        // ===========================
-        btn.onclick = () => {
-            form.reset();
-            document.getElementById("associationId").value = "";
-            modalTitre.textContent = "Créer une association";
-            modeEdition = false;
-            modal.style.display = "block";
-        };
-
-        span.onclick = () => modal.style.display = "none";
-
-        window.onclick = (e) => {
-            if (e.target === modal) modal.style.display = "none";
-        };
-
-        // ===========================
-        // CHARGER COMMUNES DANS SELECT
-        // ===========================
-        async function chargerCommunes() {
-            const response = await fetch('/api/communes');
-            const communes = await response.json();
-            const select   = document.getElementById('id_commune');
-
-            communes.forEach(c => {
-                select.innerHTML += `<option value="${c.id}">${c.nom}</option>`;
-            });
-        }
-
-        // ===========================
-        // CHARGER LES ASSOCIATIONS
-        // ===========================
-        async function chargerAssociations() {
-            const response = await fetch('/api/associations');
-            const data     = await response.json();
-
-            if (!Array.isArray(data)) {
-                console.error("Erreur API :", data);
-                return;
-            }
-
-            afficherTableau(data);
-            afficherCartes(data);
-        }
-
-        // ===========================
-        // AFFICHER TABLEAU
-        // ===========================
-        function afficherTableau(associations) {
-            const tbody = document.getElementById('tableAssociations');
-            tbody.innerHTML = '';
-
-            associations.forEach(a => {
-                const date = a.date_creation
-                    ? new Date(a.date_creation).toLocaleDateString('fr-FR') : '-';
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${a.id_association}</td>
-                        <td>${a.nom}</td>
-                        <td>${a.numero       || '-'}</td>
-                        <td>${a.siret        || '-'}</td>
-                        <td>${a.adresse      || '-'}</td>
-                        <td>${date}</td>
-                        <td>${a.telephone    || '-'}</td>
-                        <td>${a.president    || '-'}</td>
-                        <td>${a.nom_commune  || '-'}</td>
-                        <td>
-                            <button onclick="ouvrirModification(${JSON.stringify(a).replace(/"/g, '&quot;')})">✏️</button>
-                            <button onclick="supprimer(${a.id_association})">🗑️</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        // ===========================
-        // AFFICHER CARTES
-        // ===========================
-        function afficherCartes(associations) {
-            const conteneur = document.getElementById('cartesAssociations');
-            conteneur.innerHTML = '';
-
-            associations.forEach(a => {
-                conteneur.innerHTML += `
-                    <div style="background:white; padding:20px; border-radius:10px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.1); min-width:200px;">
-                        <h3>🤝 ${a.nom}</h3>
-                        <p><strong>Président :</strong> ${a.president || '-'}</p>
-                        <p><strong>Commune :</strong> ${a.nom_commune || '-'}</p>
-                        <p><strong>Téléphone :</strong> ${a.telephone || '-'}</p>
-                        <button onclick="ouvrirModification(${JSON.stringify(a).replace(/"/g, '&quot;')})">✏️ Modifier</button>
-                        <button onclick="supprimer(${a.id_association})">🗑️ Supprimer</button>
-                    </div>`;
-            });
-        }
-
-        // ===========================
-        // SOUMETTRE (AJOUT OU MODIF)
-        // ===========================
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const id = document.getElementById("associationId").value;
-
-            const donnees = {
-                nom:           document.getElementById('nom').value,
-                numero:        document.getElementById('numero').value,
-                siret:         document.getElementById('siret').value,
-                adresse:       document.getElementById('adresse').value,
-                date_creation: document.getElementById('date_creation').value,
-                telephone:     document.getElementById('telephone').value,
-                president:     document.getElementById('president').value,
-                id_commune:    document.getElementById('id_commune').value
-            };
-
-            if (modeEdition && id) {
-                // PUT — modifier
-                await fetch(`/api/associations/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(donnees)
-                });
-            } else {
-                // POST — ajouter
-                await fetch('/api/associations', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(donnees)
-                });
-            }
-
-            modal.style.display = "none";
-            chargerAssociations();
-        });
-
-        // ===========================
-        // OUVRIR EN MODE MODIFICATION
-        // ===========================
-        function ouvrirModification(a) {
-            document.getElementById("associationId").value  = a.id_association;
-            document.getElementById("nom").value            = a.nom            || '';
-            document.getElementById("numero").value         = a.numero         || '';
-            document.getElementById("siret").value          = a.siret          || '';
-            document.getElementById("adresse").value        = a.adresse        || '';
-            document.getElementById("telephone").value      = a.telephone      || '';
-            document.getElementById("president").value      = a.president      || '';
-            document.getElementById("id_commune").value     = a.id_commune     || '';
-
-            if (a.date_creation) {
-                document.getElementById("date_creation").value =
-                    new Date(a.date_creation).toISOString().split('T')[0];
-            }
-
-            modalTitre.textContent = "Modifier une association";
-            modeEdition = true;
-            modal.style.display = "block";
-        }
-
-        // ===========================
-        // SUPPRIMER
-        // ===========================
-        async function supprimer(id) {
-            if (!confirm('Supprimer cette association ?')) return;
-            await fetch(`/api/associations/${id}`, { method: 'DELETE' });
-            chargerAssociations();
-        }
-
-        // Chargement initial
-        chargerCommunes();
-        chargerAssociations();
-    </script>
-
+        tbody.innerHTML += `
+            <tr>
+                <td>${a.id_association ?? a.id ?? '-'}</td>
+                <td>${a.nom          ?? '-'}</td>
+                <td>${a.numero       ?? '-'}</td>
+                <td>${a.siret        ?? '-'}</td>
+                <td>${a.adresse      ?? '-'}</td>
+                <td>${date}</td>
+                <td>${a.telephone    ?? '-'}</td>
+                <td>${a.president    ?? '-'}</td>
+                <td><button onclick="supprimer(${a.id_association ?? a.id})">🗑️</button></td>
+            </tr>`;
+    });
+}
+  </script>
 </body>
 </html>
