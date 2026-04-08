@@ -29,33 +29,99 @@
   </div>
 
   <script>
+    // ===================================================
+    // VARIABLES GLOBALES
+    // ===================================================
+    /**
+     * Stocke la liste complète des associations
+     * Utilisé pour filtrer sans recharger depuis l'API
+     */
     let toutesLesAssociations = [];
 
+    // ===================================================
+    // CHARGER LES COMMUNES POUR LE FILTRE
+    // ===================================================
+    /**
+     * Charge la liste des communes et remplit le select de filtre
+     * Permet à l'utilisateur de filtrer les associations par commune
+     */
     async function chargerCommunes() {
-      const communes = await fetch('/api/communes').then(r => r.json());
-      const select   = document.getElementById('filtreCommune');
-      communes.forEach(c => {
-        select.innerHTML += `<option value="${c.id}">${c.nom}</option>`;
-      });
+      try {
+        // Récupérer toutes les communes depuis l'API
+        const communes = await fetch('/api/commune').then(r => r.json());
+        const select = document.getElementById('filtreCommune');
+        
+        // Créer une option pour chaque commune
+        communes.forEach(c => {
+          select.innerHTML += `<option value="${c.id}">${c.nom}</option>`;
+        });
+      } catch (err) {
+        // Afficher les erreurs dans la console
+        console.error('Erreur chargement communes:', err);
+        alert('Erreur lors du chargement des communes');
+      }
     }
 
+    // ===================================================
+    // CHARGER TOUTES LES ASSOCIATIONS PAR COMMUNE
+    // ===================================================
+    /**
+     * Charge la liste des associations avec les informations de leurs communes
+     * Récupère les données jointes depuis l'API
+     */
     async function chargerTout() {
-      toutesLesAssociations = await fetch('/api/associations-par-commune').then(r => r.json());
-      afficher(toutesLesAssociations);
+      try {
+        // Récupérer les associations avec les joints de communes depuis l'API
+        const response = await fetch('/api/association-par-commune');
+        const data = await response.json();
+
+        // Vérifier que la réponse est bien un tableau
+        if (!Array.isArray(data)) {
+          console.error("Erreur API :", data);
+          alert('Erreur : format de données invalide');
+          return;
+        }
+
+        // Stocker toutes les associations pour le filtrage
+        toutesLesAssociations = data;
+        // Afficher toutes les associations
+        afficher(toutesLesAssociations);
+      } catch (err) {
+        // Afficher les erreurs et un message dans le tableau
+        console.error('Erreur chargement associations:', err);
+        document.getElementById('tableAssociations').innerHTML = '<tr><td colspan="7">Erreur de chargement</td></tr>';
+        alert('Erreur lors du chargement des associations');
+      }
     }
 
+    // ===================================================
+    // AFFICHER LES ASSOCIATIONS DANS LE TABLEAU
+    // ===================================================
+    /**
+     * Remplit le tableau HTML avec les données des associations
+     * Formate les dates et affiche '-' si un champ est vide
+     * @param {Array} data - Tableau des associations à afficher
+     */
     function afficher(data) {
+      // Récupérer le tbody du tableau
       const tbody = document.getElementById('tableAssociations');
+      // Vider le contenu précédent
       tbody.innerHTML = '';
 
+      // Si aucune association, afficher un message
       if (data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7">Aucune association trouvée</td></tr>';
         return;
       }
 
+      // Pour chaque association, créer une ligne de tableau
       data.forEach(a => {
+        // Formater la date de création en français (JJ/MM/AAAA)
         const date = a.date_creation
-          ? new Date(a.date_creation).toLocaleDateString('fr-FR') : '-';
+          ? new Date(a.date_creation).toLocaleDateString('fr-FR')
+          : '-'; // Afficher '-' si pas de date
+
+        // Ajouter une ligne au tableau avec toutes les informations
         tbody.innerHTML += `
           <tr>
             <td><strong>${a.nom_commune}</strong></td>
@@ -69,31 +135,33 @@
       });
     }
 
+    // ===================================================
+    // FILTRER LES ASSOCIATIONS PAR COMMUNE
+    // ===================================================
+    /**
+     * Écoute le changement du select de filtre
+     * Filtre les associations selon la commune sélectionnée
+     */
     document.getElementById('filtreCommune').addEventListener('change', (e) => {
+      // Récupérer l'ID de la commune sélectionnée
       const id = e.target.value;
+      
+      // Si aucun filtre sélectionné, afficher toutes les associations
       if (id === '') {
         afficher(toutesLesAssociations);
       } else {
+        // Sinon, afficher seulement les associations de cette commune
         afficher(toutesLesAssociations.filter(a => String(a.id_commune) === id));
       }
     });
 
+    // ===================================================
+    // INITIALISATION DE LA PAGE
+    // ===================================================
+    // Charger les communes pour le select au chargement
     chargerCommunes();
+    // Charger et afficher toutes les associations au chargement
     chargerTout();
-
-    async function chargerTout() {
-    const response = await fetch('/api/associations-par-commune');
-    const data     = await response.json();
-
-    // ✅ Vérifier que c'est bien un tableau
-    if (!Array.isArray(data)) {
-        console.error("Erreur API :", data);
-        return;
-    }
-
-    toutesLesAssociations = data;
-    afficher(toutesLesAssociations);
-}
 
   </script>
 </body>

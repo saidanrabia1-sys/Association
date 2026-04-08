@@ -4,70 +4,133 @@
   <meta charset="UTF-8">
   <title>MJC</title>
   <link rel="stylesheet" href="/css/style.css">
+  
 </head>
 <body>
   <%- include('navbar') %>
-  <div class="container">
-    <h1>🏢 MJC</h1>
 
-    <form id="formMjc">
-      <input type="text" id="nom"       placeholder="Nom de la MJC" required>
-      <input type="text" id="adresse"   placeholder="Adresse">
-      <input type="text" id="telephone" placeholder="Téléphone">
-      <button type="submit">➕ Ajouter</button>
-    </form>
+  <div class="page">
+    <p class="page-title">
+      🏢 Gestion des MJC
+      <span class="count-badge" id="counter"></span>
+    </p>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Numéro</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="tableMjc"></tbody>
-    </table>
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field">
+          <label for="nom">Nom de la MJC</label>
+          <input type="text" id="nom" placeholder="Ex: MJC Centre-ville">
+        </div>
+        <div class="field">
+          <label for="adresse">Adresse</label>
+          <input type="text" id="adresse" placeholder="Ex: 12 rue de la Paix">
+        </div>
+        <div class="field">
+          <label for="telephone">Téléphone</label>
+          <input type="text" id="telephone" placeholder="Ex: 01 23 45 67 89">
+        </div>
+        <button class="btn-add" id="btnAjouter">+ Ajouter</button>
+      </div>
+      <p class="erreur" id="erreur">Veuillez saisir au moins le nom de la MJC.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Nom</th>
+            <th>Adresse</th>
+            <th>Téléphone</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tableMjc"></tbody>
+      </table>
+    </div>
   </div>
 
   <script>
+    let pendingDelete = null;
+
     async function chargerMjc() {
       const response = await fetch('/api/mjc');
-      const data     = await response.json();
-      const tbody    = document.getElementById('tableMjc');
-      tbody.innerHTML = '';
-
-      data.forEach(m => {
-        console.log(m)
-        console.log(m.NOM)
-        tbody.innerHTML += `
-          <tr>
-            <td>${m.ID}</td>
-            <td>${m.NOM}</td>
-            <td>${m.ADRESSE  || '-'}</td>
-            <td>${m.TELEPHONE|| '-'}</td>
-            <td><button onclick="supprimer(${m.ID})">🗑️</button></td>
-          </tr>`;
-      });
+      const data = await response.json();
+      afficher(data);
     }
 
-    document.getElementById('formMjc').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    function afficher(data) {
+      const tbody = document.getElementById('tableMjc');
+      const counter = document.getElementById('counter');
+
+      counter.textContent = data.length > 0
+        ? data.length + ' entrée' + (data.length > 1 ? 's' : '')
+        : '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">Aucune MJC enregistrée pour le moment.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(m => {
+        if (pendingDelete === m.ID) {
+          return `
+            <tr class="confirm-row">
+              <td colspan="4"><span class="confirm-msg">Supprimer "${m.NOM}" ?</span></td>
+              <td style="white-space:nowrap">
+                <button class="btn-confirm" onclick="confirmerSuppression(${m.ID})">Confirmer</button>
+                <button class="btn-cancel" onclick="annuler()">Annuler</button>
+              </td>
+            </tr>`;
+        }
+        return `
+          <tr>
+            <td><span class="badge-id">${m.ID}</span></td>
+            <td style="font-weight:500">${m.NOM}</td>
+            <td>${m.ADRESSE || '<span class="muted">—</span>'}</td>
+            <td>${m.TELEPHONE || '<span class="muted">—</span>'}</td>
+            <td><button class="btn-del" onclick="demanderSuppression(${m.ID})">Supprimer</button></td>
+          </tr>`;
+      }).join('');
+    }
+
+    function demanderSuppression(id) {
+      pendingDelete = id;
+      chargerMjc();
+    }
+
+    async function confirmerSuppression(id) {
+      await fetch(`/api/mjc/${id}`, { method: 'DELETE' });
+      pendingDelete = null;
+      chargerMjc();
+    }
+
+    function annuler() {
+      pendingDelete = null;
+      chargerMjc();
+    }
+
+    document.getElementById('btnAjouter').addEventListener('click', async () => {
+      const nom       = document.getElementById('nom').value.trim();
+      const adresse   = document.getElementById('adresse').value.trim();
+      const telephone = document.getElementById('telephone').value.trim();
+      const erreur    = document.getElementById('erreur');
+
+      if (!nom) { erreur.style.display = 'block'; return; }
+      erreur.style.display = 'none';
+
       await fetch('/api/mjc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nom:       document.getElementById('nom').value,
-          adresse:   document.getElementById('adresse').value,
-          telephone: document.getElementById('telephone').value
-        })
+        body: JSON.stringify({ nom, adresse, telephone })
       });
-      e.target.reset();
+
+      document.getElementById('nom').value = '';
+      document.getElementById('adresse').value = '';
+      document.getElementById('telephone').value = '';
+      pendingDelete = null;
       chargerMjc();
     });
-
-    async function supprimer(id) {
-      if (!confirm('Supprimer ?')) return;
-      await fetch(`/api/mjc/${id}`, { method: 'DELETE' });
-      chargerMjc();
-    }
 
     chargerMjc();
   </script>

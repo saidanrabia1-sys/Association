@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 });
 
 // API route pour la page d'accueil
-app.get("/accueil", (req, res) => {
+app.get("/api/accueil", (req, res) => {
     console.log(" Je passe dans /api/accueil");
 
     res.render('accueil');
@@ -48,59 +48,6 @@ app.get('/commune',               (req, res) => res.render('commune'));
 app.get('/mjc',                   (req, res) => res.render('mjc'));
 app.get('/reservation',           (req, res) => res.render('reservation'));
 app.get('/associations-commune',  (req, res) => res.render('associations-commune'));
-
-// ===================================================
-// API ASSOCIATIONS
-// ===================================================
-app.get('/api/association', (req, res) => {
-    req.getConnection((err, connection) => {
-        if (err) return res.status(500).json({ error: "Erreur connexion DB" });
-        connection.query("SELECT * FROM association", (err, results) => {
-            if (err) return res.status(500).json({ error: "Erreur SQL" });
-            res.json(results);
-        });
-    });
-});
-
-app.post('/api/association', (req, res) => {
-    const data = req.body;
-    req.getConnection((err, connection) => {
-        if (err) return res.status(500).json({ error: "Erreur connexion DB" });
-        connection.query("INSERT INTO association SET ?", data, (err, results) => {
-            if (err) return res.status(500).json({ error: "Erreur SQL" });
-            res.json({ id_association: results.insertId, ...data });
-        });
-    });
-});
-
-app.put('/api/association/:id', (req, res) => {
-    const { id } = req.params;
-    const data   = req.body;
-    req.getConnection((err, connection) => {
-        if (err) return res.status(500).json({ error: "Erreur connexion DB" });
-        connection.query(
-            "UPDATE association SET ? WHERE id_association = ?", [data, id],
-            (err) => {
-                if (err) return res.status(500).json({ error: "Erreur SQL" });
-                res.json({ message: "Association modifiée" });
-            }
-        );
-    });
-});
-
-app.delete('/api/association/:id', (req, res) => {
-    const { id } = req.params;
-    req.getConnection((err, connection) => {
-        if (err) return res.status(500).json({ error: "Erreur connexion DB" });
-        connection.query(
-            "DELETE FROM association WHERE id_association = ?", [id],
-            (err) => {
-                if (err) return res.status(500).json({ error: "Erreur SQL" });
-                res.json({ message: "Association supprimée" });
-            }
-        );
-    });
-});
 
 // ===================================================
 // API COMMUNES
@@ -165,14 +112,13 @@ app.get('/api/mjc', (req, res) => {
     });
 });
 
-$=app.get('/api/mjc', (req, res) => {
+app.post('/api/mjc', (req, res) => {
+    const data = req.body;
     req.getConnection((err, connection) => {
-        if (err) return res.status(500).json({ error: "Erreur DB" });
-
-        connection.query("SELECT * FROM mjc", (err, results) => {
+        if (err) return res.status(500).json({ error: "Erreur connexion DB" });
+        connection.query("INSERT INTO mjc SET ?", data, (err, results) => {
             if (err) return res.status(500).json({ error: "Erreur SQL" });
-
-            res.json(results); // ✅ IMPORTANT
+            res.json({ id_mjc: results.insertId, ...data });
         });
     });
 });
@@ -193,7 +139,6 @@ app.put('/api/mjc/:id', (req, res) => {
 });
 
 app.delete('/api/mjc/:id', (req, res) => {
-    console.log
     const { id } = req.params;
     req.getConnection((err, connection) => {
         if (err) return res.status(500).json({ error: "Erreur connexion DB" });

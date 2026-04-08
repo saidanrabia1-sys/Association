@@ -40,78 +40,166 @@
     // ===================================================
     // CHARGER LES SELECTS (associations + mjc)
     // ===================================================
+    /**
+     * Charge les listes déroulantes des associations et MJC
+     * Récupère les données depuis l'API et remplit les selects
+     */
     async function chargerSelects() {
-      const associations = await fetch('/api/associations').then(r => r.json()); // ✅ /api/
-      const mjcs         = await fetch('/api/mjc').then(r => r.json());          // ✅ /api/
+      try {
+        // Récupérer les associations depuis l'API
+        const associations = await fetch('/api/association').then(r => r.json());
+        // Récupérer les MJC depuis l'API
+        const mjcs = await fetch('/api/mjc').then(r => r.json());
 
-      const selA = document.getElementById('id_association');
-      associations.forEach(a => {
-        selA.innerHTML += `<option value="${a.id_association}">${a.nom}</option>`; // ✅ id_association
-      });
+        // Remplir le select des associations
+        const selA = document.getElementById('id_association');
+        associations.forEach(a => {
+          // Créer une option pour chaque association avec son ID et nom
+          selA.innerHTML += `<option value="${a.id_association}">${a.nom}</option>`;
+        });
 
-      const selM = document.getElementById('id_mjc');
-      mjcs.forEach(m => {
-        selM.innerHTML += `<option value="${m.id}">${m.nom}</option>`;
-      });
+        // Remplir le select des MJC
+        const selM = document.getElementById('id_mjc');
+        mjcs.forEach(m => {
+          // Créer une option pour chaque MJC avec son ID et nom
+          selM.innerHTML += `<option value="${m.id_mjc}">${m.nom}</option>`;
+        });
+      } catch (error) {
+        // Afficher les erreurs de chargement
+        console.error('Erreur lors du chargement des selects:', error);
+      }
     }
 
     // ===================================================
     // CHARGER LES RÉSERVATIONS
     // ===================================================
+    /**
+     * Charge et affiche toutes les réservations dans le tableau
+     * Formate les dates au format français
+     */
     async function charger() {
-      const res  = await fetch('/api/reservations'); // ✅ /api/
-      const data = await res.json();
-      const tbody = document.getElementById('tableReservations');
-      tbody.innerHTML = '';
+      try {
+        // Récupérer toutes les réservations depuis l'API
+        const res = await fetch('/api/reservation');
+        
+        // Vérifier si la requête a réussi
+        if (!res.ok) throw new Error('Erreur lors du chargement des réservations');
+        
+        const data = await res.json();
+        
+        // Récupérer le tbody du tableau et vider le contenu précédent
+        const tbody = document.getElementById('tableReservations');
+        tbody.innerHTML = '';
 
-      data.forEach(r => {
-        const date = r.date_reservation
-          ? new Date(r.date_reservation).toLocaleDateString('fr-FR')
-          : '-';
+        // Pour chaque réservation, créer une ligne de tableau
+        data.forEach(r => {
+          // Formater la date en français (JJ/MM/AAAA)
+          const date = r.date_reservation
+            ? new Date(r.date_reservation).toLocaleDateString('fr-FR')
+            : '-'; // Afficher '-' si pas de date
 
-        tbody.innerHTML += `
-          <tr>
-            <td>${r.association || r.id_association}</td>
-            <td>${r.mjc || r.id_mjc}</td>
-            <td>${date}</td>
-            <td>
-              <button onclick="supprimer(${r.id})">🗑️ Supprimer</button>
-            </td>
-          </tr>`;
-      });
+          // Ajouter une ligne au tableau avec les informations de la réservation
+          tbody.innerHTML += `
+            <tr>
+              <td>${r.association}</td>
+              <td>${r.mjc}</td>
+              <td>${date}</td>
+              <td>
+                <button onclick="supprimer(${r.id})">🗑️ Supprimer</button>
+              </td>
+            </tr>`;
+        });
+      } catch (error) {
+        // Afficher les erreurs de chargement
+        console.error('Erreur lors du chargement des réservations:', error);
+      }
     }
 
     // ===================================================
     // AJOUTER UNE RÉSERVATION
     // ===================================================
+    /**
+     * Écoute la soumission du formulaire et ajoute une nouvelle réservation
+     */
     document.getElementById('formReservation').addEventListener('submit', async (e) => {
+      // Empêcher le rechargement de la page
       e.preventDefault();
 
-      await fetch('/api/reservations', { // ✅ /api/
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_association:   document.getElementById('id_association').value,
-          id_mjc:           document.getElementById('id_mjc').value,
-          date_reservation: document.getElementById('date_reservation').value
-        })
-      });
+      try {
+        // Récupérer les valeurs du formulaire
+        const id_association = document.getElementById('id_association').value;
+        const id_mjc = document.getElementById('id_mjc').value;
+        const date_reservation = document.getElementById('date_reservation').value;
 
-      e.target.reset();
-      charger();
+        // Validation basique des champs
+        if (!id_association || !id_mjc || !date_reservation) {
+          alert('Veuillez remplir tous les champs');
+          return;
+        }
+
+        // Envoyer les données à l'API
+        const response = await fetch('/api/reservation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_association,
+            id_mjc,
+            date_reservation
+          })
+        });
+
+        // Vérifier si la requête a réussi
+        if (!response.ok) throw new Error('Erreur lors de l\'ajout de la réservation');
+
+        // Réinitialiser le formulaire
+        e.target.reset();
+        // Recharger la liste des réservations
+        charger();
+        // Afficher un message de succès
+        alert('Réservation ajoutée avec succès');
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout:', error);
+        alert('Erreur lors de l\'ajout de la réservation');
+      }
     });
 
     // ===================================================
     // SUPPRIMER UNE RÉSERVATION
     // ===================================================
+    /**
+     * Supprime une réservation après confirmation de l'utilisateur
+     * @param {number} id - L'ID de la réservation à supprimer
+     */
     async function supprimer(id) {
-      if (!confirm('Supprimer cette réservation ?')) return;
-      await fetch(`/api/reservations/${id}`, { method: 'DELETE' }); // ✅ /api/
-      charger();
+      // Demander une confirmation à l'utilisateur
+      if (!confirm('Êtes-vous sûr de vouloir supprimer cette réservation ?')) {
+        return; // Annuler si l'utilisateur refuse
+      }
+
+      try {
+        // Envoyer la demande de suppression à l'API
+        const response = await fetch(`/api/reservation/${id}`, { method: 'DELETE' });
+        
+        // Vérifier si la requête a réussi
+        if (!response.ok) throw new Error('Erreur lors de la suppression');
+        
+        // Recharger la liste des réservations
+        charger();
+        alert('Réservation supprimée avec succès');
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression de la réservation');
+      }
     }
 
+    // ===================================================
+    // INITIALISATION DE LA PAGE
+    // ===================================================
+    // Charger les selects au chargement de la page
     chargerSelects();
+    // Charger et afficher toutes les réservations au chargement de la page
     charger();
   </script>
 </body>
 </html>
+

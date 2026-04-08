@@ -7,75 +7,167 @@
 </head>
 <body>
   <%- include('navbar') %>
-  <div class="container">
-    <h1>🏛️ Communes de Mayotte</h1>
 
-    <form id="formCommune">
-      <input type="text" id="nom" placeholder="Nom de la commune" required>
-      <input type="text" id="adresse" placeholder="Adresse">
-      <input type="text" id="telephone" placeholder="Téléphone">
-      <input type="text" id="president" placeholder="Maire / Président">
-      <button type="submit">➕ Ajouter une commune</button>
-    </form>
+  <div class="page">
+    <p class="page-title">
+      🏛️ Gestion des Communes
+      <span class="count-badge" id="counter"></span>
+    </p>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nom</th>
-          <th>Adresse</th>
-          <th>Téléphone</th>
-          <th>Président</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="tableCommunes"></tbody>
-    </table>
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field">
+          <label>Nom</label>
+          <input type="text" id="nom" placeholder="Nom de la commune">
+        </div>
+        <div class="field">
+          <label>Adresse</label>
+          <input type="text" id="adresse" placeholder="Adresse">
+        </div>
+        <div class="field">
+          <label>Téléphone</label>
+          <input type="text" id="telephone" placeholder="Téléphone">
+        </div>
+        <div class="field">
+          <label>Maire / Président</label>
+          <input type="text" id="president" placeholder="Nom du maire">
+        </div>
+
+        <button class="btn-add" id="btnAjouter">+ Ajouter</button>
+      </div>
+
+      <p class="erreur" id="erreur">Veuillez saisir le nom de la commune.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Adresse</th>
+            <th>Téléphone</th>
+            <th>Président</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tableCommunes"></tbody>
+      </table>
+    </div>
   </div>
 
   <script>
-    async function chargerCommunes() {
-      const response = await fetch('/api/communes');
-      const data     = await response.json();
-      const tbody    = document.getElementById('tableCommunes');
-      tbody.innerHTML = '';
+    let pendingDelete = null;
 
-      data.forEach(commune => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${commune.id}</td>
-            <td>${commune.nom}</td>
-            <td>${commune.adresse || '-'}</td>
-            <td>${commune.telephone || '-'}</td>
-            <td>${commune.president || '-'}</td>
-            <td><button onclick="supprimer(${commune.id})">🗑️ Supprimer</button></td>
-          </tr>`;
-      });
+    async function chargerCommune() {
+      try {
+        const response = await fetch('/api/commune');
+        if (!response.ok) throw new Error();
+
+        const data = await response.json();
+        afficher(data);
+      } catch (err) {
+        const tbody = document.getElementById('tableCommunes');
+        tbody.innerHTML = '<tr><td colspan="6">Erreur de chargement</td></tr>';
+      }
     }
 
-    document.getElementById('formCommune').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await fetch('/api/communes', {
+    function afficher(data) {
+      const tbody = document.getElementById('tableCommunes');
+      const counter = document.getElementById('counter');
+
+      counter.textContent = data.length
+        ? data.length + ' commune' + (data.length > 1 ? 's' : '')
+        : '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Aucune commune.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(c => {
+        if (pendingDelete === c.id) {
+          return `
+            <tr class="confirm-row">
+              <td colspan="6">Supprimer "${c.nom}" ?</td>
+              <td>
+                <button class="btn-confirm" onclick="confirmer(${c.id})">Confirmer</button>
+                <button class="btn-cancel" onclick="annuler()">Annuler</button>
+              </td>
+            </tr>`;
+        }
+
+        return `
+          <tr>
+            <td><span class="badge-id">${c.ID}</span></td>
+            <td>${c.NOM}</td>
+            <td>${c.ADRESSE || '<span class="muted">—</span>'}</td>
+            <td>${c.TELEPHONE || '<span class="muted">—</span>'}</td>
+            <td>${c.PRESIDENT || '<span class="muted">—</span>'}</td>
+            <td>
+              <button class="btn-del" onclick="demanderSuppression(${c.id})">
+                Supprimer
+              </button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function demanderSuppression(id) {
+      pendingDelete = id;
+      chargerCommune();
+    }
+
+    async function confirmer(id) {
+      await fetch(`/api/commune/${id}`, { method: 'DELETE' });
+      pendingDelete = null;
+      chargerCommune();
+    }
+
+    function annuler() {
+      pendingDelete = null;
+      chargerCommune();
+    }
+
+    document.getElementById('btnAjouter').addEventListener('click', async () => {
+      const nom = document.getElementById('nom').value.trim();
+      const adresse = document.getElementById('adresse').value.trim();
+      const telephone = document.getElementById('telephone').value.trim();
+      const president = document.getElementById('president').value.trim();
+      const erreur = document.getElementById('erreur');
+      const btn = document.getElementById('btnAjouter');
+
+      if (!nom) {
+        erreur.style.display = 'block';
+        return;
+      }
+
+      erreur.style.display = 'none';
+
+      btn.disabled = true;
+      btn.textContent = "Ajout...";
+
+      await fetch('/api/commune', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nom:       document.getElementById('nom').value,
-          adresse:   document.getElementById('adresse').value,
-          telephone: document.getElementById('telephone').value,
-          president: document.getElementById('president').value
-        })
+        body: JSON.stringify({ nom, adresse, telephone, president })
       });
-      e.target.reset();
-      chargerCommunes();
+
+      document.getElementById('nom').value = '';
+      document.getElementById('adresse').value = '';
+      document.getElementById('telephone').value = '';
+      document.getElementById('president').value = '';
+
+      btn.disabled = false;
+      btn.textContent = "+ Ajouter";
+
+      pendingDelete = null;
+      chargerCommune();
     });
 
-    async function supprimer(id) {
-      if (!confirm('Supprimer cette commune ?')) return;
-      await fetch(`/api/communes/${id}`, { method: 'DELETE' });
-      chargerCommunes();
-    }
+    document.addEventListener('DOMContentLoaded', chargerCommune);
 
-    chargerCommunes();
   </script>
+
 </body>
 </html>

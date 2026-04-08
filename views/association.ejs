@@ -34,34 +34,156 @@
   </div>
 
   <script>
+    // ===================================================
+    // CHARGER TOUTES LES ASSOCIATIONS
+    // ===================================================
+    /**
+     * Récupère la liste d'associations depuis l'API
+     * et les affiche dans le tableau HTML
+     */
     async function chargerAssociations() {
-    const response = await fetch('/api/associations');
-    const data     = await response.json();
+      try {
+        // Récupérer les associations depuis l'API
+        const response = await fetch('/api/association');
+        const data = await response.json();
 
-    // Debug : voir ce que retourne l'API
-    console.log("Données reçues :", data[0]);
+        // Vérifier que la réponse est bien un tableau
+        if (!Array.isArray(data)) {
+          console.error("Erreur API :", data);
+          alert('Erreur : format de données invalide');
+          return;
+        }
 
-    const tbody = document.getElementById('tableAssociations');
-    tbody.innerHTML = '';
+        // Debug : voir ce que retourne l'API
+        console.log("Associations reçues :", data);
 
-    data.forEach(a => {
-        const date = a.date_creation
-            ? new Date(a.date_creation).toLocaleDateString('fr-FR') : '-';
+        // Récupérer le tbody du tableau
+        const tbody = document.getElementById('tableAssociations');
+        // Vider le contenu précédent
+        tbody.innerHTML = '';
 
-        tbody.innerHTML += `
+        // Si aucune association, afficher un message
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9">Aucune association</td></tr>';
+          return;
+        }
+
+        // Pour chaque association, créer une ligne de tableau
+        data.forEach(a => {
+          // Formater la date de création en français (JJ/MM/AAAA)
+          const date = a.date_creation
+            ? new Date(a.date_creation).toLocaleDateString('fr-FR')
+            : '-'; // Afficher '-' si pas de date
+
+          // Ajouter une ligne au tableau avec les informations de l'association
+          tbody.innerHTML += `
             <tr>
-                <td>${a.id_association ?? a.id ?? '-'}</td>
-                <td>${a.nom          ?? '-'}</td>
-                <td>${a.numero       ?? '-'}</td>
-                <td>${a.siret        ?? '-'}</td>
-                <td>${a.adresse      ?? '-'}</td>
-                <td>${date}</td>
-                <td>${a.telephone    ?? '-'}</td>
-                <td>${a.president    ?? '-'}</td>
-                <td><button onclick="supprimer(${a.id_association ?? a.id})">🗑️</button></td>
+              
+              <td>${a.ID?? '-'}</td>
+              <td>${a.NOM ?? '-'}</td>
+              <td>${a.NUMERO ?? '-'}</td>
+              <td>${a.SIRET ?? '-'}</td>
+              <td>${a.ADRESSE ?? '-'}</td>
+              <td>${a.DATE}</td>
+              <td>${a.TELEPHONE ?? '-'}</td>
+              <td>${a.PRESIDENT ?? '-'}</td>
+              <td><button onclick="supprimer(${a.ID_ASSOCIATION})">🗑️ Supprimer</button></td>
             </tr>`;
+        });
+      } catch (err) {
+        // Afficher les erreurs et un message dans le tableau
+        console.error('Erreur chargement associations:', err);
+        document.getElementById('tableAssociations').innerHTML = '<tr><td colspan="9">Erreur de chargement</td></tr>';
+        alert('Erreur lors du chargement des associations');
+      }
+    }
+
+    // ===================================================
+    // SUPPRIMER UNE ASSOCIATION
+    // ===================================================
+    /**
+     * Supprime une association après confirmation de l'utilisateur
+     * @param {number} id - L'ID de l'association à supprimer
+     */
+    async function supprimer(id) {
+      // Demander une confirmation à l'utilisateur
+      if (!confirm('Êtes-vous sûr de vouloir supprimer cette association ?')) return;
+      
+      try {
+        // Envoyer la demande de suppression à l'API
+        const response = await fetch(`/api/association/${id}`, { method: 'DELETE' });
+        
+        // Vérifier si la reqête a réussi
+        if (!response.ok) throw new Error('Erreur serveur');
+        
+        // Recharger la liste des associations
+        chargerAssociations();
+        alert('Association supprimée avec succès');
+      } catch (err) {
+        console.error('Erreur suppression:', err);
+        alert('Erreur lors de la suppression');
+      }
+    }
+
+    // ===================================================
+    // AJOUTER UNE NOUVELLE ASSOCIATION
+    // ===================================================
+    /**
+     * Écoute la soumission du formulaire pour ajouter une nouvelle association
+     */
+    document.getElementById('formAssociation').addEventListener('submit', async (e) => {
+      // Empêcher le rechargement de la page
+      e.preventDefault();
+      
+      // Récupérer et nettoyer le nom (obligatoire)
+      const nom = document.getElementById('nom').value.trim();
+      if (!nom) {
+        alert('Veuillez saisir le nom de l\'association');
+        return;
+      }
+
+      // Récupérer les autres champs (optionnels)
+      const numero = document.getElementById('numero').value.trim();
+      const siret = document.getElementById('siret').value.trim();
+      const adresse = document.getElementById('adresse').value.trim();
+      const date_creation = document.getElementById('date_creation').value;
+      const telephone = document.getElementById('telephone').value.trim();
+      const president = document.getElementById('president').value.trim();
+
+      try {
+        // Envoyer les données à l'API pour créer l'association
+        const response = await fetch('/api/association', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nom, numero, siret, adresse, date_creation, telephone, president })
+        });
+        
+        // Vérifier si la requête a réussi
+        if (!response.ok) throw new Error('Erreur serveur');
+
+        // Réinitialiser tous les champs du formulaire
+        document.getElementById('nom').value = '';
+        document.getElementById('numero').value = '';
+        document.getElementById('siret').value = '';
+        document.getElementById('adresse').value = '';
+        document.getElementById('date_creation').value = '';
+        document.getElementById('telephone').value = '';
+        document.getElementById('president').value = '';
+
+        // Recharger la liste des associations
+        chargerAssociations();
+        alert('Association ajoutée avec succès');
+      } catch (err) {
+        console.error('Erreur ajout:', err);
+        alert('Erreur lors de l\'ajout de l\'association');
+      }
     });
-}
+
+    // ===================================================
+    // INITIALISATION DE LA PAGE
+    // ===================================================
+    // Charger et afficher les associations au chargement de la page
+    document.addEventListener('DOMContentLoaded', chargerAssociations);
   </script>
 </body>
 </html>

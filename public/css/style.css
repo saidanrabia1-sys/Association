@@ -36,7 +36,7 @@ body {
 }
 
 .navbar a:hover {
-  background: #3498db;
+  background: #2b6388;
 }
 
 /* CONTAINER */
@@ -57,7 +57,7 @@ form {
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 25px;
-  background: white;
+  background: rgb(255, 158, 158);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -168,3 +168,34 @@ button:hover {
   border-radius: 5px;
   border: 1px solid #ddd;
 }
+    .page { padding: 2rem 0; max-width: 860px; margin: 0 auto; };
+    .page-title { font-size: 22px; font-weight: 500; margin: 0 0 1.5rem; display: flex; align-items: center; gap: 10px; }
+    .form-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 12px; color: #888; font-weight: 500; letter-spacing: 0.03em; }
+    input[type="text"] { width: 100%; padding: 0 10px; height: 36px; border: 0.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
+    input[type="text"]:focus { outline: none; border-color: #a4c2f4; }
+    .btn-add { background: #e8f0fe; color: #1a56db; border: 0.5px solid #a4c2f4; border-radius: 8px; padding: 0 1.25rem; height: 36px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .btn-add:hover { opacity: 0.85; }
+    .erreur { margin: 8px 0 0; font-size: 13px; color: #c0392b; display: none; }
+    .table-wrap { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead { background: #f9f9f9; }
+    th { padding: 10px 16px; text-align: left; font-size: 12px; font-weight: 500; color: #888; letter-spacing: 0.04em; border-bottom: 0.5px solid #e0e0e0; }
+    td { padding: 10px 16px; color: #111; border-bottom: 0.5px solid #e0e0e0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9f9f9; }
+    .badge-id { display: inline-block; background: #f3f3f3; border: 0.5px solid #e0e0e0; border-radius: 8px; padding: 2px 8px; font-size: 12px; color: #888; }
+    .muted { color: #bbb; }
+    .btn-del { background: none; border: 0.5px solid #e0e0e0; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #888; cursor: pointer; font-family: inherit; }
+    .btn-del:hover { background: #fff0f0; color: #c0392b; border-color: #f5c6cb; }
+    .confirm-row td { background: #fff0f0 !important; }
+    .confirm-msg { font-size: 13px; color: #c0392b; font-weight: 500; }
+    .btn-confirm { background: #fff0f0; color: #c0392b; border: 0.5px solid #f5c6cb; border-radius: 8px; padding: 4px 12px; font-size: 12px; cursor: pointer; font-weight: 500; font-family: inherit; }
+    .btn-confirm:hover { opacity: 0.8; }
+    .btn-cancel { background: none; border: 0.5px solid #e0e0e0; border-radius: 8px; padding: 4px 12px; font-size: 12px; cursor: pointer; color: #888; margin-left: 6px; font-family: inherit; }
+    .btn-cancel:hover { background: #f3f3f3; }
+    .empty { text-align: center; padding: 2rem; color: #bbb; font-size: 14px; }
+    .count-badge { font-size: 13px; font-weight: 400; color: #888; margin-left: 6px; }
+ 
